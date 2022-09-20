@@ -4189,15 +4189,15 @@ define('shaders/GpuProgram',[
  * @exports BasicTextureProgram
  */
 define('shaders/BasicTextureProgram',[
-        '../error/ArgumentError',
-        '../util/Color',
-        '../shaders/GpuProgram',
-        '../util/Logger'
-    ],
+    '../error/ArgumentError',
+    '../util/Color',
+    '../shaders/GpuProgram',
+    '../util/Logger'
+],
     function (ArgumentError,
-              Color,
-              GpuProgram,
-              Logger) {
+        Color,
+        GpuProgram,
+        Logger) {
         "use strict";
 
         /**
@@ -4218,19 +4218,19 @@ define('shaders/BasicTextureProgram',[
          */
         var BasicTextureProgram = function (gl) {
             var vertexShaderSource =
-                    'attribute vec4 vertexPoint;\n' +
-                    'attribute vec4 vertexTexCoord;\n' +
-                    'attribute vec4 normalVector;\n' +
-                    'uniform mat4 mvpMatrix;\n' +
-                    'uniform mat4 mvInverseMatrix;\n' +
-                    'uniform mat4 texCoordMatrix;\n' +
-                    'uniform bool applyLighting;\n' +
-                    'varying vec2 texCoord;\n' +
-                    'varying vec4 normal;\n' +
-                    'void main() {gl_Position = mvpMatrix * vertexPoint;\n' +
-                    'texCoord = (texCoordMatrix * vertexTexCoord).st;\n' +
-                    'if (applyLighting) {normal = mvInverseMatrix * normalVector;}\n' +
-                    '}',
+                'attribute vec4 vertexPoint;\n' +
+                'attribute vec4 vertexTexCoord;\n' +
+                'attribute vec4 normalVector;\n' +
+                'uniform mat4 mvpMatrix;\n' +
+                'uniform mat4 mvInverseMatrix;\n' +
+                'uniform mat4 texCoordMatrix;\n' +
+                'uniform bool applyLighting;\n' +
+                'varying vec2 texCoord;\n' +
+                'varying vec4 normal;\n' +
+                'void main() {gl_Position = mvpMatrix * vertexPoint;\n' +
+                'texCoord = (texCoordMatrix * vertexTexCoord).st;\n' +
+                'if (applyLighting) {normal = mvInverseMatrix * normalVector;}\n' +
+                '}',
                 fragmentShaderSource =
                     'precision mediump float;\n' +
                     'uniform float opacity;\n' +
@@ -4247,7 +4247,7 @@ define('shaders/BasicTextureProgram',[
                     'if (enableTexture && !modulateColor)\n' +
                     '    gl_FragColor = textureColor * color * opacity;\n' +
                     'else if (enableTexture && modulateColor)\n' +
-                    '    gl_FragColor = color * floor(textureColor.a + 0.5);\n' +
+                    '    gl_FragColor = color * ceil(textureColor.a);\n' +
                     'else\n' +
                     '    gl_FragColor = color * opacity;\n' +
                     'if (gl_FragColor.a == 0.0) {discard;}\n' +
@@ -10439,19 +10439,19 @@ define('util/measure/MeasurerUtils',[
  * @exports Sector
  */
 define('geom/Sector',[
-        '../geom/Angle',
-        '../error/ArgumentError',
-        '../geom/Location',
-        '../util/Logger',
-        '../geom/Vec3',
-        '../util/WWMath'
-    ],
+    '../geom/Angle',
+    '../error/ArgumentError',
+    '../geom/Location',
+    '../util/Logger',
+    '../geom/Vec3',
+    '../util/WWMath'
+],
     function (Angle,
-              ArgumentError,
-              Location,
-              Logger,
-              Vec3,
-              WWMath) {
+        ArgumentError,
+        Location,
+        Logger,
+        Vec3,
+        WWMath) {
         "use strict";
 
         /**
@@ -10485,13 +10485,6 @@ define('geom/Sector',[
              * @type {Number}
              */
             this.maxLongitude = maxLongitude;
-
-            // Cached center point
-            this.centerPoint = null;
-
-            // Cached corner points
-            this.cornerPoints = null;
-
         };
 
         /**
@@ -10509,14 +10502,6 @@ define('geom/Sector',[
         Sector.FULL_SPHERE = new Sector(-90, 90, -180, 180);
 
         /**
-         * Resets cached values from calculations.
-         */
-        Sector.prototype.resetCachedValues = function() {
-            this.centerPoint = null;
-            this.cornerPoints = null;
-        };
-
-        /**
          * Sets this sector's latitudes and longitudes to those of a specified sector.
          * @param {Sector} sector The sector to copy.
          * @returns {Sector} This sector, set to the values of the specified sector.
@@ -10531,8 +10516,6 @@ define('geom/Sector',[
             this.maxLatitude = sector.maxLatitude;
             this.minLongitude = sector.minLongitude;
             this.maxLongitude = sector.maxLongitude;
-
-            this.resetCachedValues();
 
             return this;
         };
@@ -10663,8 +10646,6 @@ define('geom/Sector',[
             this.maxLatitude = maxLatitude;
             this.minLongitude = minLongitude;
             this.maxLongitude = maxLongitude;
-
-            this.resetCachedValues();
 
             return this;
         };
@@ -10978,8 +10959,6 @@ define('geom/Sector',[
             if (this.maxLongitude < sector.maxLongitude)
                 this.maxLongitude = sector.maxLongitude;
 
-            this.resetCachedValues();
-
             return this;
         };
 
@@ -10993,19 +10972,15 @@ define('geom/Sector',[
          *
          * @throws IllegalArgumentException if <code>globe</code> is null.
          */
-        Sector.prototype.computeCenterPoint = function(globe, exaggeration) {
+        Sector.prototype.computeCenterPoint = function (globe, exaggeration) {
             if (globe == null) {
                 throw new ArgumentError(
                     Logger.logMessage(Logger.Level.LEVEL_SEVERE, "Sector", "computeCornerPoints", "missingGlobe"));
             }
 
-            if (this.centerPoint == null) {
-                var lat = 0.5 * (this.minLatitude + this.maxLatitude);
-                var lon = 0.5 * (this.minLongitude + this.maxLongitude);
-                this.centerPoint = globe.computePointFromPosition(lat, lon, exaggeration * globe.elevationAtLocation(lat, lon), Vec3.zero());
-            }
-
-            return Vec3.fromVec3(this.centerPoint);
+            var lat = 0.5 * (this.minLatitude + this.maxLatitude);
+            var lon = 0.5 * (this.minLongitude + this.maxLongitude);
+            return globe.computePointFromPosition(lat, lon, exaggeration * globe.elevationAtLocation(lat, lon), Vec3.zero());
         };
 
         /**
@@ -11018,33 +10993,27 @@ define('geom/Sector',[
          *
          * @throws IllegalArgumentException if <code>globe</code> is null.
          */
-        Sector.prototype.computeCornerPoints = function(globe, exaggeration) {
+        Sector.prototype.computeCornerPoints = function (globe, exaggeration) {
             if (!globe) {
                 throw new ArgumentError(
                     Logger.logMessage(Logger.Level.LEVEL_SEVERE, "Sector", "computeCornerPoints", "missingGlobe"));
             }
             var corners = new Array(4);
 
-            if (this.cornerPoints == null) {
-                var minLat = this.minLatitude;
-                var maxLat = this.maxLatitude;
-                var minLon = this.minLongitude;
-                var maxLon = this.maxLongitude;
+            var minLat = this.minLatitude;
+            var maxLat = this.maxLatitude;
+            var minLon = this.minLongitude;
+            var maxLon = this.maxLongitude;
 
-                corners[0] = globe.computePointFromPosition(minLat, minLon, exaggeration * globe.elevationAtLocation(minLat, minLon), Vec3.zero());
-                corners[1] = globe.computePointFromPosition(minLat, maxLon, exaggeration * globe.elevationAtLocation(minLat, maxLon), Vec3.zero());
-                corners[2] = globe.computePointFromPosition(maxLat, maxLon, exaggeration * globe.elevationAtLocation(maxLat, maxLon), Vec3.zero());
-                corners[3] = globe.computePointFromPosition(maxLat, minLon, exaggeration * globe.elevationAtLocation(maxLat, minLon), Vec3.zero());
-                this.cornerPoints = new Array(corners.length);
-                for (var i = 0, len = corners.length; i < len; i++) {
-                    this.cornerPoints[i] = Vec3.fromVec3(corners[i]);
-                }
+            corners[0] = globe.computePointFromPosition(minLat, minLon, exaggeration * globe.elevationAtLocation(minLat, minLon), Vec3.zero());
+            corners[1] = globe.computePointFromPosition(minLat, maxLon, exaggeration * globe.elevationAtLocation(minLat, maxLon), Vec3.zero());
+            corners[2] = globe.computePointFromPosition(maxLat, maxLon, exaggeration * globe.elevationAtLocation(maxLat, maxLon), Vec3.zero());
+            corners[3] = globe.computePointFromPosition(maxLat, minLon, exaggeration * globe.elevationAtLocation(maxLat, minLon), Vec3.zero());
+            this.cornerPoints = new Array(corners.length);
+            for (var i = 0, len = corners.length; i < len; i++) {
+                this.cornerPoints[i] = Vec3.fromVec3(corners[i]);
             }
-            else {
-                for (var i = 0, len = this.cornerPoints.length; i < len; i++) {
-                    corners[i] = Vec3.fromVec3(this.cornerPoints[i]);
-                }
-            }
+
             return corners;
         };
 
@@ -11064,7 +11033,7 @@ define('geom/Sector',[
          *
          * @throws IllegalArgumentException if any argument is null.
          */
-        Sector.prototype.distanceTo = function(dc, point) {
+        Sector.prototype.distanceTo = function (dc, point) {
             if (!dc) {
                 throw new ArgumentError(
                     Logger.logMessage(Logger.Level.LEVEL_SEVERE, "Sector", "distanceTo", "missingDc"));
@@ -29767,18 +29736,15 @@ define('globe/TiledElevationCoverage',['../util/AbsentResourceList',
 
         // Intentionally not documented.
         TiledElevationCoverage.prototype.retrieveTileImage = function (tile) {
-            if (this.currentRetrievals.indexOf(tile.tileKey) < 0) {
-
-                if (this.currentRetrievals.length > this.retrievalQueueSize) {
-                    return;
-                }
+            if (this.currentRetrievals.length < this.retrievalQueueSize
+                && this.currentRetrievals.indexOf(tile.tileKey) < 0
+                && !this.absentResourceList.isResourceAbsent(tile.tileKey)) {
 
                 var url = this.resourceUrlForTile(tile, this.retrievalImageFormat),
                     xhr = new XMLHttpRequest(),
                     elevationCoverage = this;
 
-                if (!url)
-                    return;
+                if (!url) return;
 
                 xhr.open("GET", url, true);
                 xhr.responseType = 'arraybuffer';
@@ -32050,190 +32016,19 @@ define('util/BasicTimeSequence',[
  * limitations under the License.
  */
 /**
- * @exports LookAt
- */
-define('geom/LookAt',[
-        '../error/ArgumentError',
-        '../util/Logger',
-        '../geom/Matrix',
-        '../geom/Position'
-    ],
-    function (ArgumentError,
-              Logger,
-              Matrix,
-              Position) {
-        "use strict";
-
-        var LookAt = function () {
-            /**
-             * The geographic position at the center of the viewport.
-             * @type {Location}
-             */
-            this.position = new Position(30, -110, 0);
-
-            /**
-             * Look at heading, in degrees clockwise from north.
-             * @type {Number}
-             * @default 0
-             */
-            this.heading = 0;
-
-            /**
-             * Look at tilt, in degrees.
-             * @type {Number}
-             * @default 0
-             */
-            this.tilt = 0;
-
-            /**
-             * Look at roll, in degrees.
-             * @type {Number}
-             * @default 0
-             */
-            this.roll = 0;
-
-            /**
-             * The distance from the eye point to its look at location.
-             * @type {Number}
-             * @default 10,000 kilometers
-             */
-            this.range = 10e6; // TODO: Compute initial range to fit globe in viewport.
-        };
-
-        /**
-         * Internal use only.
-         * Computes the model view matrix for this look at view.
-         * @ignore
-         */
-        LookAt.prototype.computeViewingTransform = function (globe, modelview) {
-            if (!globe) {
-                throw new ArgumentError(
-                    Logger.logMessage(Logger.LEVEL_SEVERE, "LookAt", "computeViewingTransform", "missingGlobe"));
-            }
-
-            if (!modelview) {
-                throw new ArgumentError(
-                    Logger.logMessage(Logger.LEVEL_SEVERE, "LookAt", "computeViewingTransform", "missingModelview"));
-            }
-
-            modelview.setToIdentity();
-            modelview.multiplyByLookAtModelview(this.position, this.range, this.heading, this.tilt, this.roll, globe);
-
-            return modelview;
-        };
-
-        /**
-         * Indicates whether the components of this object are equal to those of a specified object.
-         * @param {LookAt} otherLookAt The object to test equality with. May be null or undefined, in which case this
-         * function returns false.
-         * @returns {boolean} true if all components of this object are equal to the corresponding
-         * components of the specified object, otherwise false.
-         */
-        LookAt.prototype.equals = function (otherLookAt) {
-            if (otherLookAt) {
-                return this.position.equals(otherLookAt.position) &&
-                    this.heading === otherLookAt.heading &&
-                    this.tilt === otherLookAt.tilt &&
-                    this.roll === otherLookAt.roll &&
-                    this.range === otherLookAt.range;
-            }
-
-            return false;
-        };
-
-        /**
-         * Creates a new object that is a copy of this object.
-         * @returns {LookAt} The new object.
-         */
-        LookAt.prototype.clone = function () {
-            var clone = new LookAt();
-            clone.copy(this);
-
-            return clone;
-        };
-
-        /**
-         * Copies the components of a specified object to this object.
-         * @param {LookAt} copyObject The object to copy.
-         * @returns {LookAt} A copy of this object equal to copyObject.
-         * @throws {ArgumentError} If the specified object is null or undefined.
-         */
-        LookAt.prototype.copy = function (copyObject) {
-            if (!copyObject) {
-                throw new ArgumentError(
-                    Logger.logMessage(Logger.LEVEL_SEVERE, "LookAt", "copy", "missingObject"));
-            }
-
-            this.position.copy(copyObject.position);
-            this.heading = copyObject.heading;
-            this.tilt = copyObject.tilt;
-            this.roll = copyObject.roll;
-            this.range = copyObject.range;
-
-            return this;
-        };
-
-        /**
-         * Returns a string representation of this object.
-         * @returns {String}
-         */
-        LookAt.prototype.toString = function () {
-            return this.position.toString() + "," + this.heading + "\u00b0," + this.tilt + "\u00b0," + this.roll + "\u00b0";
-        };
-
-        return LookAt;
-    });
-/*
- * Copyright 2015-2017 WorldWind Contributors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-/**
  * @exports Camera
  */
 define('geom/Camera',[
         '../error/ArgumentError',
-        '../geom/Line',
         '../util/Logger',
-        '../geom/LookAt',
-        '../geom/Matrix',
-        '../geom/Position',
-        '../geom/Vec3',
-        '../util/WWMath'
+        '../geom/Position'
     ],
     function (ArgumentError,
-              Line,
               Logger,
-              LookAt,
-              Matrix,
-              Position,
-              Vec3,
-              WWMath) {
+              Position) {
         "use strict";
 
-        var Camera = function (worldWindow) {
-            if (!worldWindow) {
-                throw new ArgumentError(
-                    Logger.logMessage(Logger.LEVEL_SEVERE, "Camera", "constructor", "missingWorldWindow"));
-            }
-
-            /**
-             * The WorldWindow associated with this camera.
-             * @type {WorldWindow}
-             * @readonly
-             */
-            this.wwd = worldWindow;
-
+        var Camera = function () {
             /**
              * The geographic location of the camera.
              * @type {Location}
@@ -32266,63 +32061,6 @@ define('geom/Camera',[
              * @default 45
              */
             this.fieldOfView = 45;
-
-            /**
-             * Internal use only.
-             * A temp variable used to hold model view matrices during calculations. Using an object level temp property
-             * negates the need for ad-hoc allocations and reduces load on the garbage collector.
-             * @ignore
-             */
-            this.scratchModelview = Matrix.fromIdentity();
-
-            /**
-             * Internal use only.
-             * A temp variable used to hold points during calculations. Using an object level temp property
-             * negates the need for ad-hoc allocations and reduces load on the garbage collector.
-             * @ignore
-             */
-            this.scratchPoint = new Vec3(0, 0, 0);
-
-            /**
-             * Internal use only.
-             * A temp variable used to hold origin matrices during calculations. Using an object level temp property
-             * negates the need for ad-hoc allocations and reduces load on the garbage collector.
-             * @ignore
-             */
-            this.scratchOrigin = Matrix.fromIdentity();
-
-            /**
-             * Internal use only.
-             * A temp variable used to hold positions during calculations. Using an object level temp property
-             * negates the need for ad-hoc allocations and reduces load on the garbage collector.
-             * @ignore
-             */
-            this.scratchPosition = new Position(0, 0, 0);
-
-            /**
-             * Internal use only.
-             * A temp variable used to hold lines during calculations. Using an object level temp property
-             * negates the need for ad-hoc allocations and reduces load on the garbage collector.
-             * @ignore
-             */
-            this.scratchRay = new Line(new Vec3(0, 0, 0), new Vec3(0, 0, 0));
-        };
-
-        /**
-         * Internal use only.
-         * Computes the model view matrix for this camera.
-         * @ignore
-         */
-        Camera.prototype.computeViewingTransform = function (modelview) {
-            if (!modelview) {
-                throw new ArgumentError(
-                    Logger.logMessage(Logger.LEVEL_SEVERE, "Camera", "computeViewingTransform", "missingModelview"));
-            }
-
-            modelview.setToIdentity();
-            modelview.multiplyByFirstPersonModelview(this.position, this.heading, this.tilt, this.roll, this.wwd.globe);
-
-            return modelview;
         };
 
         /**
@@ -32348,7 +32086,7 @@ define('geom/Camera',[
          * @returns {Camera} The new object.
          */
         Camera.prototype.clone = function () {
-            var clone = new Camera(this.wwd);
+            var clone = new Camera();
             clone.copy(this);
 
             return clone;
@@ -32366,120 +32104,12 @@ define('geom/Camera',[
                     Logger.logMessage(Logger.LEVEL_SEVERE, "Camera", "copy", "missingObject"));
             }
 
-            this.wwd = copyObject.wwd;
             this.position.copy(copyObject.position);
             this.heading = copyObject.heading;
             this.tilt = copyObject.tilt;
             this.roll = copyObject.roll;
 
             return this;
-        };
-
-        /**
-         * Sets the properties of this Camera such that it mimics the supplied look at view. Note that repeated conversions
-         * between a look at and a camera view may result in view errors due to rounding.
-         * @param {LookAt} lookAt The look at view to mimic.
-         * @returns {Camera} This camera set to mimic the supplied look at view.
-         * @throws {ArgumentError} If the specified look at view is null or undefined.
-         */
-        Camera.prototype.setFromLookAt = function (lookAt) {
-            if (!lookAt) {
-                throw new ArgumentError(
-                    Logger.logMessage(Logger.LEVEL_SEVERE, "Camera", "setFromLookAt", "missingLookAt"));
-            }
-
-            var globe = this.wwd.globe,
-                ve = this.wwd.verticalExaggeration,
-                ray = this.scratchRay,
-                originPoint = this.scratchPoint,
-                modelview = this.scratchModelview,
-                origin = this.scratchOrigin;
-
-            lookAt.computeViewingTransform(globe, modelview);
-            modelview.extractEyePoint(originPoint);
-
-            globe.computePositionFromPoint(originPoint[0], originPoint[1], originPoint[2], this.position);
-            origin.setToIdentity();
-            origin.multiplyByLocalCoordinateTransform(originPoint, globe);
-            modelview.multiplyMatrix(origin);
-
-            this.heading = modelview.extractHeading(lookAt.roll); // disambiguate heading and roll
-            this.tilt = modelview.extractTilt();
-            this.roll = lookAt.roll; // roll passes straight through
-
-            // Check if camera altitude is not under the surface and correct tilt
-            var elevation = globe.elevationAtLocation(this.position.latitude, this.position.longitude) * ve + 10.0; // 10m above surface
-            if(elevation > this.position.altitude) {
-                // Set camera altitude above the surface
-                this.position.altitude = elevation;
-                // Compute new camera point
-                globe.computePointFromPosition(this.position.latitude, this.position.longitude, this.position.altitude, originPoint);
-                // Compute look at point
-                globe.computePointFromPosition(lookAt.position.latitude, lookAt.position.longitude, lookAt.position.altitude, ray.origin);
-                // Compute normal to globe in look at point
-                globe.surfaceNormalAtLocation(lookAt.position.latitude, lookAt.position.longitude, ray.direction);
-                // Calculate tilt angle between new camera point and look at point
-                originPoint.subtract(ray.origin).normalize();
-                var dot = ray.direction.dot(originPoint);
-                if (dot >= -1 || dot <= 1) {
-                    this.tilt = Math.acos(dot) / Math.PI * 180;
-                }
-            }
-
-            return this;
-        };
-
-        /**
-         * Converts the properties of this Camera to those of a look at view. Note that repeated conversions
-         * between a look at and a camera view may result in view errors due to rounding.
-         * @param {LookAt} result The look at view to hold the converted properties.
-         * @returns {LookAt} A reference to the result parameter.
-         * @throws {ArgumentError} If the specified result object is null or undefined.
-         */
-        Camera.prototype.getAsLookAt = function (result) {
-            if (!result) {
-                throw new ArgumentError(
-                    Logger.logMessage(Logger.LEVEL_SEVERE, "Camera", "getAsLookAt", "missingResult"));
-            }
-
-            var globe = this.wwd.globe,
-                viewport = this.wwd.viewport,
-                forwardRay = this.scratchRay,
-                modelview = this.scratchModelview,
-                originPoint = this.scratchPoint,
-                originPos = this.scratchPosition,
-                origin = this.scratchOrigin;
-
-            this.computeViewingTransform(modelview);
-
-            // Pick terrain located behind the viewport center point
-            var terrainObject = this.wwd.pick([viewport.width / 2, viewport.height / 2]).terrainObject();
-            if (terrainObject) {
-                // Use picked terrain position including approximate rendered altitude
-                originPos.copy(terrainObject.position);
-                globe.computePointFromPosition(originPos.latitude, originPos.longitude, originPos.altitude, originPoint);
-            } else {
-                // Center is outside the globe - use point on horizon
-                modelview.extractEyePoint(forwardRay.origin);
-                modelview.extractForwardVector(forwardRay.direction);
-
-                var horizon = globe.horizonDistance(this.position.altitude);
-                forwardRay.pointAt(horizon, originPoint);
-
-                globe.computePositionFromPoint(originPoint[0], originPoint[1], originPoint[2], originPos);
-            }
-
-            origin.setToIdentity();
-            origin.multiplyByLocalCoordinateTransform(originPoint, globe);
-            modelview.multiplyMatrix(origin);
-
-            result.position.copy(originPos);
-            result.range = -modelview[11];
-            result.heading = modelview.extractHeading(this.roll); // disambiguate heading and roll
-            result.tilt = modelview.extractTilt();
-            result.roll = this.roll; // roll passes straight through
-
-            return result;
         };
 
         /**
@@ -32492,8 +32122,6 @@ define('geom/Camera',[
 
         return Camera;
     });
-
-
 /*
  * Copyright 2003-2006, 2009, 2017, 2020 United States Government, as represented
  * by the Administrator of the National Aeronautics and Space Administration.
@@ -33726,6 +33354,131 @@ define('gesture/DragRecognizer',['../gesture/GestureRecognizer'],
     });
 
 /*
+ * Copyright 2015-2017 WorldWind Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * @exports LookAt
+ */
+define('geom/LookAt',[
+        '../error/ArgumentError',
+        '../util/Logger',
+        '../geom/Position'
+    ],
+    function (ArgumentError,
+              Logger,
+              Position) {
+        "use strict";
+
+        var LookAt = function () {
+            /**
+             * The geographic position at the center of the viewport.
+             * @type {Location}
+             */
+            this.position = new Position(30, -110, 0);
+
+            /**
+             * Look at heading, in degrees clockwise from north.
+             * @type {Number}
+             * @default 0
+             */
+            this.heading = 0;
+
+            /**
+             * Look at tilt, in degrees.
+             * @type {Number}
+             * @default 0
+             */
+            this.tilt = 0;
+
+            /**
+             * Look at roll, in degrees.
+             * @type {Number}
+             * @default 0
+             */
+            this.roll = 0;
+
+            /**
+             * The distance from the eye point to its look at location.
+             * @type {Number}
+             * @default 10,000 kilometers
+             */
+            this.range = 10e6; // TODO: Compute initial range to fit globe in viewport.
+        };
+
+        /**
+         * Indicates whether the components of this object are equal to those of a specified object.
+         * @param {LookAt} otherLookAt The object to test equality with. May be null or undefined, in which case this
+         * function returns false.
+         * @returns {boolean} true if all components of this object are equal to the corresponding
+         * components of the specified object, otherwise false.
+         */
+        LookAt.prototype.equals = function (otherLookAt) {
+            if (otherLookAt) {
+                return this.position.equals(otherLookAt.position) &&
+                    this.heading === otherLookAt.heading &&
+                    this.tilt === otherLookAt.tilt &&
+                    this.roll === otherLookAt.roll &&
+                    this.range === otherLookAt.range;
+            }
+
+            return false;
+        };
+
+        /**
+         * Creates a new object that is a copy of this object.
+         * @returns {LookAt} The new object.
+         */
+        LookAt.prototype.clone = function () {
+            var clone = new LookAt();
+            clone.copy(this);
+
+            return clone;
+        };
+
+        /**
+         * Copies the components of a specified object to this object.
+         * @param {LookAt} copyObject The object to copy.
+         * @returns {LookAt} A copy of this object equal to copyObject.
+         * @throws {ArgumentError} If the specified object is null or undefined.
+         */
+        LookAt.prototype.copy = function (copyObject) {
+            if (!copyObject) {
+                throw new ArgumentError(
+                    Logger.logMessage(Logger.LEVEL_SEVERE, "LookAt", "copy", "missingObject"));
+            }
+
+            this.position.copy(copyObject.position);
+            this.heading = copyObject.heading;
+            this.tilt = copyObject.tilt;
+            this.roll = copyObject.roll;
+            this.range = copyObject.range;
+
+            return this;
+        };
+
+        /**
+         * Returns a string representation of this object.
+         * @returns {String}
+         */
+        LookAt.prototype.toString = function () {
+            return this.position.toString() + "," + this.heading + "\u00b0," + this.tilt + "\u00b0," + this.roll + "\u00b0";
+        };
+
+        return LookAt;
+    });
+/*
  * Copyright 2003-2006, 2009, 2017, 2020 United States Government, as represented
  * by the Administrator of the National Aeronautics and Space Administration.
  * All rights reserved.
@@ -34694,14 +34447,6 @@ define('WorldWindowController',[
             }
         };
 
-        /**
-         * Called by WorldWindow to allow the controller to enforce navigation limits. Implementation is not required by
-         * sub-classes.
-         */
-        WorldWindowController.prototype.applyLimits = function () {
-
-        };
-
         return WorldWindowController;
     }
 );
@@ -34839,6 +34584,8 @@ define('BasicWorldWindowController',[
             this.beginPoint = new Vec2(0, 0);
             this.lastPoint = new Vec2(0, 0);
             this.lastRotation = 0;
+            this.lastWheelEvent = 0;
+            this.activeGestures = 0;
 
             /**
              * Internal use only.
@@ -34959,9 +34706,9 @@ define('BasicWorldWindowController',[
                 lookAt.position.latitude += forwardDegrees * cosHeading - sideDegrees * sinHeading;
                 lookAt.position.longitude += forwardDegrees * sinHeading + sideDegrees * cosHeading;
                 this.lastPoint.set(tx, ty);
-                this.applyLookAtLimits(lookAt);
-                this.wwd.camera.setFromLookAt(lookAt);
-                this.wwd.redraw();
+                this.applyChanges();
+            } else if (state === WorldWind.ENDED || state === WorldWind.CANCELLED) {
+                this.gestureDidEnd();
             }
         };
 
@@ -35003,7 +34750,7 @@ define('BasicWorldWindowController',[
 
                 // Transform the original view's modelview matrix to account for the gesture's change.
                 var modelview = Matrix.fromIdentity();
-                lookAt.computeViewingTransform(globe, modelview);
+                this.wwd.lookAtToViewingTransform(lookAt, modelview);
                 modelview.multiplyByTranslation(point2[0] - point1[0], point2[1] - point1[1], point2[2] - point1[2]);
 
                 // Compute the globe point at the screen center from the perspective of the transformed view.
@@ -35021,9 +34768,9 @@ define('BasicWorldWindowController',[
                 lookAt.heading = params.heading;
                 lookAt.tilt = params.tilt;
                 lookAt.roll = params.roll;
-                this.applyLookAtLimits(lookAt);
-                this.wwd.camera.setFromLookAt(lookAt);
-                this.wwd.redraw();
+                this.applyChanges();
+            } else if (state === WorldWind.ENDED || state === WorldWind.CANCELLED) {
+                this.gestureDidEnd();
             }
         };
 
@@ -35045,9 +34792,9 @@ define('BasicWorldWindowController',[
                 // Apply the change in heading and tilt to this view's corresponding properties.
                 lookAt.heading = this.beginLookAt.heading + headingDegrees;
                 lookAt.tilt = this.beginLookAt.tilt + tiltDegrees;
-                this.applyLookAtLimits(lookAt);
-                this.wwd.camera.setFromLookAt(lookAt);
-                this.wwd.redraw();
+                this.applyChanges();
+            } else if (state === WorldWind.ENDED || state === WorldWind.CANCELLED) {
+                this.gestureDidEnd();
             }
         };
 
@@ -35064,10 +34811,10 @@ define('BasicWorldWindowController',[
                     // began.
                     var lookAt = this.lookAt;
                     lookAt.range = this.beginLookAt.range / scale;
-                    this.applyLookAtLimits(lookAt);
-                    this.wwd.camera.setFromLookAt(lookAt);
-                    this.wwd.redraw();
+                    this.applyChanges();
                 }
+            } else if (state === WorldWind.ENDED || state === WorldWind.CANCELLED) {
+                this.gestureDidEnd();
             }
         };
 
@@ -35086,9 +34833,9 @@ define('BasicWorldWindowController',[
                 var lookAt = this.lookAt;
                 lookAt.heading -= rotation - this.lastRotation;
                 this.lastRotation = rotation;
-                this.applyLookAtLimits(lookAt);
-                this.wwd.camera.setFromLookAt(lookAt);
-                this.wwd.redraw();
+                this.applyChanges();
+            } else if (state === WorldWind.ENDED || state === WorldWind.CANCELLED) {
+                this.gestureDidEnd();
             }
         };
 
@@ -35105,16 +34852,21 @@ define('BasicWorldWindowController',[
                 var tiltDegrees = -90 * ty / this.wwd.canvas.clientHeight;
                 // Apply the change in heading and tilt to this view's corresponding properties.
                 var lookAt = this.lookAt;
-                lookAt.tilt = this.beginTilt + tiltDegrees;
-                this.applyLookAtLimits(lookAt);
-                this.wwd.camera.setFromLookAt(lookAt);
-                this.wwd.redraw();
+                lookAt.tilt = this.beginLookAt.tilt + tiltDegrees;
+                this.applyChanges();
+            } else if (state === WorldWind.ENDED || state === WorldWind.CANCELLED) {
+                this.gestureDidEnd();
             }
         };
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handleWheelEvent = function (event) {
-            var lookAt = this.wwd.camera.getAsLookAt(this.lookAt);
+            var lookAt = this.lookAt;
+            var timeStamp = event.timeStamp;
+            if (timeStamp - this.lastWheelEvent > 500) {
+                this.wwd.cameraAsLookAt(lookAt);
+                this.lastWheelEvent = timeStamp;
+            }
             // Normalize the wheel delta based on the wheel delta mode. This produces a roughly consistent delta across
             // browsers and input devices.
             var normalizedDelta;
@@ -35133,17 +34885,17 @@ define('BasicWorldWindowController',[
 
             // Apply the scale to this view's properties.
             lookAt.range *= scale;
-            this.applyLookAtLimits(lookAt);
-            this.wwd.camera.setFromLookAt(lookAt);
-            this.wwd.redraw();
+            this.applyChanges();
         };
 
         /**
          * Internal use only.
-         * Limits the properties of a look at view to prevent unwanted navigation behaviour.
+         * Limits the properties of a look at view to prevent unwanted navigation behaviour and update camera view.
          * @ignore
          */
-        BasicWorldWindowController.prototype.applyLookAtLimits = function (lookAt) {
+        BasicWorldWindowController.prototype.applyChanges = function () {
+            var lookAt = this.lookAt;
+
             // Clamp latitude to between -90 and +90, and normalize longitude to between -180 and +180.
             lookAt.position.latitude = WWMath.clamp(lookAt.position.latitude, -90, 90);
             lookAt.position.longitude = Angle.normalizedDegreesLongitude(lookAt.position.longitude);
@@ -35171,16 +34923,10 @@ define('BasicWorldWindowController',[
                 // Force tilt to 0 when in 2D mode to keep the viewer looking straight down.
                 lookAt.tilt = 0;
             }
-        };
 
-        /**
-         * Documented in super-class.
-         * @ignore
-         */
-        BasicWorldWindowController.prototype.applyLimits = function () {
-            var lookAt = this.wwd.camera.getAsLookAt(this.lookAt);
-            this.applyLookAtLimits(lookAt);
-            this.wwd.camera.setFromLookAt(lookAt);
+            // Update camera view.
+            this.wwd.cameraFromLookAt(lookAt);
+            this.wwd.redraw();
         };
 
         /**
@@ -35189,8 +34935,17 @@ define('BasicWorldWindowController',[
          * @ignore
          */
         BasicWorldWindowController.prototype.gestureDidBegin = function () {
-            this.wwd.camera.getAsLookAt(this.beginLookAt);
-            this.lookAt.copy(this.beginLookAt);
+            if (this.activeGestures++ === 0) {
+                this.wwd.cameraAsLookAt(this.beginLookAt);
+                this.lookAt.copy(this.beginLookAt);
+            }
+        };
+
+        BasicWorldWindowController.prototype.gestureDidEnd = function () {
+            // this should always be the case, but we check anyway
+            if (this.activeGestures > 0) {
+                this.activeGestures--;
+            }
         };
 
         return BasicWorldWindowController;
@@ -61794,7 +61549,7 @@ define('util/GoToAnimator',[
             // Reset the cancellation flag.
             this.cancelled = false;
 
-            this.wwd.camera.getAsLookAt(this.lookAt);
+            this.wwd.cameraAsLookAt(this.lookAt);
             // Capture the target position and determine its altitude.
             this.targetPosition = new Position(position.latitude, position.longitude,
                 position.altitude || this.lookAt.range);
@@ -61933,7 +61688,7 @@ define('util/GoToAnimator',[
                 continueAnimation = Math.abs(this.lookAt.range - this.targetPosition.altitude) > 1;
             }
 
-            this.wwd.camera.setFromLookAt(this.lookAt);
+            this.wwd.cameraFromLookAt(this.lookAt);
 
             return continueAnimation;
         };
@@ -61953,7 +61708,7 @@ define('util/GoToAnimator',[
 
             this.lookAt.position.latitude = nextLocation.latitude;
             this.lookAt.position.longitude = nextLocation.longitude;
-            this.wwd.camera.setFromLookAt(this.lookAt);
+            this.wwd.cameraFromLookAt(this.lookAt);
 
             // We're done if we're within a meter of the desired location.
             if (nextDistance < 1 / this.wwd.globe.equatorialRadius) {
@@ -74829,12 +74584,12 @@ define('navigate/Navigator',['../error/ArgumentError',
              */
             heading: {
                 get: function () {
-                    return this.wwd.camera.getAsLookAt(this.scratchLookAt).heading;
+                    return this.wwd.cameraAsLookAt(this.scratchLookAt).heading;
                 },
                 set: function (value) {
-                    var lookAt = this.wwd.camera.getAsLookAt(this.scratchLookAt);
+                    var lookAt = this.wwd.cameraAsLookAt(this.scratchLookAt);
                     lookAt.heading = value;
-                    this.wwd.camera.setFromLookAt(lookAt);
+                    this.wwd.cameraFromLookAt(lookAt);
                 }
             },
 
@@ -74845,12 +74600,12 @@ define('navigate/Navigator',['../error/ArgumentError',
              */
             tilt: {
                 get: function () {
-                    return this.wwd.camera.getAsLookAt(this.scratchLookAt).tilt;
+                    return this.wwd.cameraAsLookAt(this.scratchLookAt).tilt;
                 },
                 set: function (value) {
-                    var lookAt = this.wwd.camera.getAsLookAt(this.scratchLookAt);
+                    var lookAt = this.wwd.cameraAsLookAt(this.scratchLookAt);
                     lookAt.tilt = value;
-                    this.wwd.camera.setFromLookAt(lookAt);
+                    this.wwd.cameraFromLookAt(lookAt);
                 }
             },
 
@@ -74861,12 +74616,12 @@ define('navigate/Navigator',['../error/ArgumentError',
              */
             roll: {
                 get: function () {
-                    return this.wwd.camera.getAsLookAt(this.scratchLookAt).roll;
+                    return this.wwd.cameraAsLookAt(this.scratchLookAt).roll;
                 },
                 set: function (value) {
-                    var lookAt = this.wwd.camera.getAsLookAt(this.scratchLookAt);
+                    var lookAt = this.wwd.cameraAsLookAt(this.scratchLookAt);
                     lookAt.roll = value;
-                    this.wwd.camera.setFromLookAt(lookAt);
+                    this.wwd.cameraFromLookAt(lookAt);
                 }
             }
         });
@@ -74946,12 +74701,12 @@ define('navigate/LookAtNavigator',[
              */
             lookAtLocation: {
                 get: function () {
-                    this.wwd.camera.getAsLookAt(this.scratchLookAt);
+                    this.wwd.cameraAsLookAt(this.scratchLookAt);
                     this.scratchLookAtPositionProxy.position.copy(this.scratchLookAt.position);
                     return this.scratchLookAtPositionProxy;
                 },
                 set: function (value) {
-                    var lookAt = this.wwd.camera.getAsLookAt(this.scratchLookAt);
+                    var lookAt = this.wwd.cameraAsLookAt(this.scratchLookAt);
                     lookAt.position.latitude = value.latitude;
                     lookAt.position.longitude = value.longitude;
                     if (value.altitude) {
@@ -74960,7 +74715,7 @@ define('navigate/LookAtNavigator',[
                     else {
                         lookAt.position.altitude = 0;
                     }
-                    this.wwd.camera.setFromLookAt(lookAt);
+                    this.wwd.cameraFromLookAt(lookAt);
                 }
             },
 
@@ -74971,12 +74726,12 @@ define('navigate/LookAtNavigator',[
              */
             range: {
                 get: function () {
-                    return this.wwd.camera.getAsLookAt(this.scratchLookAt).range;
+                    return this.wwd.cameraAsLookAt(this.scratchLookAt).range;
                 },
                 set: function (value) {
-                    var lookAt = this.wwd.camera.getAsLookAt(this.scratchLookAt);
+                    var lookAt = this.wwd.cameraAsLookAt(this.scratchLookAt);
                     lookAt.range = value;
-                    this.wwd.camera.setFromLookAt(lookAt);
+                    this.wwd.cameraFromLookAt(lookAt);
                 }
             }
         });
@@ -89637,7 +89392,7 @@ define('layer/ViewControlsLayer',[
             if (this.isPointerDown(e) || this.isTouchStart(e)) {
                 this.activeControl = control;
                 this.activeOperation = this.handlePan;
-                this.wwd.camera.getAsLookAt(this.lookAt);
+                this.wwd.cameraAsLookAt(this.lookAt);
                 e.preventDefault();
 
                 if (this.isTouchStart(e)) {
@@ -89662,7 +89417,7 @@ define('layer/ViewControlsLayer',[
 
                         Location.greatCircleLocation(lookAt.position, heading, -distance,
                             lookAt.position);
-                        thisLayer.wwd.camera.setFromLookAt(lookAt);
+                        thisLayer.wwd.cameraFromLookAt(lookAt);
                         thisLayer.wwd.redraw();
                         setTimeout(setLookAtLocation, 50);
                     }
@@ -89683,7 +89438,7 @@ define('layer/ViewControlsLayer',[
             if (this.isPointerDown(e) || this.isTouchStart(e)) {
                 this.activeControl = control;
                 this.activeOperation = this.handleZoom;
-                this.wwd.camera.getAsLookAt(this.lookAt);
+                this.wwd.cameraAsLookAt(this.lookAt);
                 e.preventDefault();
 
                 if (this.isTouchStart(e)) {
@@ -89700,7 +89455,7 @@ define('layer/ViewControlsLayer',[
                         } else if (thisLayer.activeControl === thisLayer.zoomOutControl) {
                             lookAt.range *= (1 + thisLayer.zoomIncrement);
                         }
-                        thisLayer.wwd.camera.setFromLookAt(lookAt);
+                        thisLayer.wwd.cameraFromLookAt(lookAt);
                         thisLayer.wwd.redraw();
                         setTimeout(setRange, 50);
                     }
@@ -89721,7 +89476,7 @@ define('layer/ViewControlsLayer',[
             if (this.isPointerDown(e) || this.isTouchStart(e)) {
                 this.activeControl = control;
                 this.activeOperation = this.handleHeading;
-                this.wwd.camera.getAsLookAt(this.lookAt);
+                this.wwd.cameraAsLookAt(this.lookAt);
                 e.preventDefault();
 
                 if (this.isTouchStart(e)) {
@@ -89738,7 +89493,7 @@ define('layer/ViewControlsLayer',[
                         } else if (thisLayer.activeControl === thisLayer.headingRightControl) {
                             lookAt.heading -= thisLayer.headingIncrement;
                         }
-                        thisLayer.wwd.camera.setFromLookAt(lookAt);
+                        thisLayer.wwd.cameraFromLookAt(lookAt);
                         thisLayer.wwd.redraw();
                         setTimeout(setHeading, 50);
                     }
@@ -89758,7 +89513,7 @@ define('layer/ViewControlsLayer',[
             if (this.isPointerDown(e) || this.isTouchStart(e)) {
                 this.activeControl = control;
                 this.activeOperation = this.handleTilt;
-                this.wwd.camera.getAsLookAt(this.lookAt);
+                this.wwd.cameraAsLookAt(this.lookAt);
                 e.preventDefault();
 
                 if (this.isTouchStart(e)) {
@@ -89777,7 +89532,7 @@ define('layer/ViewControlsLayer',[
                             lookAt.tilt =
                                 Math.min(90, lookAt.tilt + thisLayer.tiltIncrement);
                         }
-                        thisLayer.wwd.camera.setFromLookAt(lookAt);
+                        thisLayer.wwd.cameraFromLookAt(lookAt);
                         thisLayer.wwd.redraw();
                         setTimeout(setTilt, 50);
                     }
@@ -92960,9 +92715,9 @@ define('formats/wkt/geom/WktObject',[
      */
     WktObject.prototype.addCoordinates = function (coordinates) {
         if (this._is3d) {
-            this.coordinates.push(new Position(coordinates[1], coordinates[0], coordinates[2] || 0));
+            this.coordinates.push(new Position(coordinates[0], coordinates[1], coordinates[2] || 0));
         } else {
-            this.coordinates.push(new Location(coordinates[1], coordinates[0]));
+            this.coordinates.push(new Location(coordinates[0], coordinates[1]));
         }
     };
 
@@ -95097,9 +94852,9 @@ define('util/KeyboardControls',[
          * Reset the view to North up.
          */
         KeyboardControls.prototype.resetHeading = function () {
-            this.wwd.camera.getAsLookAt(this.lookAt);
+            this.wwd.cameraAsLookAt(this.lookAt);
             this.lookAt.heading = Number(0);
-            this.wwd.camera.setFromLookAt(this.lookAt);
+            this.wwd.cameraFromLookAt(this.lookAt);
             this.wwd.redraw();
         };
 
@@ -95107,10 +94862,10 @@ define('util/KeyboardControls',[
          * Reset the view to North up and nadir.
          */
         KeyboardControls.prototype.resetHeadingAndTilt = function () {
-            this.wwd.camera.getAsLookAt(this.lookAt);
+            this.wwd.cameraAsLookAt(this.lookAt);
             this.lookAt.heading = 0;
             this.lookAt.tilt = 0;
-            this.wwd.camera.setFromLookAt(this.lookAt);
+            this.wwd.cameraFromLookAt(this.lookAt);
             this.wwd.redraw();
         };
 
@@ -95131,7 +94886,7 @@ define('util/KeyboardControls',[
          */
         KeyboardControls.prototype.handleZoom = function (operation) {
             this.activeOperation = this.handleZoom;
-            this.wwd.camera.getAsLookAt(this.lookAt);
+            this.wwd.cameraAsLookAt(this.lookAt);
 
             // This function is called by the timer to perform the operation.
             var self = this, // capture 'this' for use in the function
@@ -95142,7 +94897,7 @@ define('util/KeyboardControls',[
                         } else if (operation === "zoomOut") {
                             self.lookAt.range *= (1 + self.zoomIncrement);
                         }
-                        self.wwd.camera.setFromLookAt(self.lookAt);
+                        self.wwd.cameraFromLookAt(self.lookAt);
                         self.wwd.redraw();
                         setTimeout(setRange, 50);
                     }
@@ -95156,7 +94911,7 @@ define('util/KeyboardControls',[
          */
         KeyboardControls.prototype.handlePan = function (operation) {
             this.activeOperation = this.handlePan;
-            this.wwd.camera.getAsLookAt(this.lookAt);
+            this.wwd.cameraAsLookAt(this.lookAt);
 
             // This function is called by the timer to perform the operation.
             var self = this, // capture 'this' for use in the function
@@ -95184,7 +94939,7 @@ define('util/KeyboardControls',[
                             heading,
                             distance,
                             self.lookAt.position);
-                        self.wwd.camera.setFromLookAt(self.lookAt);
+                        self.wwd.cameraFromLookAt(self.lookAt);
                         self.wwd.redraw();
                         setTimeout(setLookAtLocation, 50);
                     }
@@ -95231,6 +94986,7 @@ define('WorldWindow',[
         './error/ArgumentError',
         './BasicWorldWindowController',
         './geom/Camera',
+        './geom/LookAt',
         './render/DrawContext',
         './globe/EarthElevationModel',
         './util/FrameStatistics',
@@ -95258,6 +95014,7 @@ define('WorldWindow',[
     function (ArgumentError,
               BasicWorldWindowController,
               Camera,
+              LookAt,
               DrawContext,
               EarthElevationModel,
               FrameStatistics,
@@ -95345,6 +95102,12 @@ define('WorldWindow',[
             this.scratchPoint = new Vec3(0, 0, 0);
 
             // Internal. Intentionally not documented.
+            this.scratchPosition = new Position(0, 0, 0);
+
+            // Internal. Intentionally not documented.
+            this.scratchRay = new Line(new Vec3(0, 0, 0), new Vec3(0, 0, 0));
+
+            // Internal. Intentionally not documented.
             this.hasStencilBuffer = gl.getContextAttributes().stencil;
 
             /**
@@ -95398,7 +95161,7 @@ define('WorldWindow',[
              * @type {Camera}
              * @default [Camera]{@link Camera}
              */
-            this.camera = new Camera(this);
+            this.camera = new Camera();
 
             /**
              * The controller used to manipulate the globe.
@@ -95701,6 +95464,113 @@ define('WorldWindow',[
         };
 
         /**
+         * Sets the properties of this Camera such that it mimics the supplied look at view. Note that repeated conversions
+         * between a look at and a camera view may result in view errors due to rounding.
+         * @param {LookAt} lookAt The look at view to mimic.
+         * @returns {Camera} This camera set to mimic the supplied look at view.
+         * @throws {ArgumentError} If the specified look at view is null or undefined.
+         */
+        WorldWindow.prototype.cameraFromLookAt = function (lookAt) {
+            if (!lookAt) {
+                throw new ArgumentError(
+                    Logger.logMessage(Logger.LEVEL_SEVERE, "Camera", "setFromLookAt", "missingLookAt"));
+            }
+
+            var globe = this.globe,
+                ve = this.verticalExaggeration,
+                position = this.camera.position,
+                ray = this.scratchRay,
+                originPoint = this.scratchPoint,
+                modelview = this.scratchModelview,
+                origin = this.scratchProjection;
+
+            this.lookAtToViewingTransform(lookAt, modelview);
+            modelview.extractEyePoint(originPoint);
+
+            globe.computePositionFromPoint(originPoint[0], originPoint[1], originPoint[2], position);
+            origin.setToIdentity();
+            origin.multiplyByLocalCoordinateTransform(originPoint, globe);
+            modelview.multiplyMatrix(origin);
+
+            this.camera.heading = modelview.extractHeading(lookAt.roll); // disambiguate heading and roll
+            this.camera.tilt = modelview.extractTilt();
+            this.camera.roll = lookAt.roll; // roll passes straight through
+
+            // Check if camera altitude is not under the surface and correct tilt
+            var elevation = globe.elevationAtLocation(position.latitude, position.longitude) * ve + 10.0; // 10m above surface
+            if(elevation > position.altitude) {
+                // Set camera altitude above the surface
+                position.altitude = elevation;
+                // Compute new camera point
+                globe.computePointFromPosition(position.latitude, position.longitude, position.altitude, originPoint);
+                // Compute look at point
+                globe.computePointFromPosition(lookAt.position.latitude, lookAt.position.longitude, lookAt.position.altitude, ray.origin);
+                // Compute normal to globe in look at point
+                globe.surfaceNormalAtLocation(lookAt.position.latitude, lookAt.position.longitude, ray.direction);
+                // Calculate tilt angle between new camera point and look at point
+                originPoint.subtract(ray.origin).normalize();
+                var dot = ray.direction.dot(originPoint);
+                if (dot >= -1 && dot <= 1) {
+                    this.camera.tilt = Math.acos(dot) / Math.PI * 180;
+                }
+            }
+
+            return this;
+        };
+
+        /**
+         * Converts the properties of this Camera to those of a look at view. Note that repeated conversions
+         * between a look at and a camera view may result in view errors due to rounding.
+         * @param {LookAt} result The look at view to hold the converted properties.
+         * @param {Position} terrainPosition Picked terrain position.
+         * @returns {LookAt} A reference to the result parameter.
+         * @throws {ArgumentError} If the specified result object is null or undefined.
+         */
+        WorldWindow.prototype.cameraAsLookAt = function (result, terrainPosition = this.pick([this.viewport.width / 2, this.viewport.height / 2]).terrainObject().position) {
+            if (!result) {
+                throw new ArgumentError(
+                    Logger.logMessage(Logger.LEVEL_SEVERE, "Camera", "getAsLookAt", "missingResult"));
+            }
+
+            var globe = this.globe,
+                forwardRay = this.scratchRay,
+                modelview = this.scratchModelview,
+                originPoint = this.scratchPoint,
+                originPos = this.scratchPosition,
+                origin = this.scratchProjection;
+
+            this.cameraToViewingTransform(modelview);
+
+            // Pick terrain located behind the viewport center point
+            if (terrainPosition) {
+                // Use picked terrain position including approximate rendered altitude
+                originPos.copy(terrainPosition);
+                globe.computePointFromPosition(originPos.latitude, originPos.longitude, originPos.altitude, originPoint);
+            } else {
+                // Center is outside the globe - use point on horizon
+                modelview.extractEyePoint(forwardRay.origin);
+                modelview.extractForwardVector(forwardRay.direction);
+
+                var horizon = globe.horizonDistance(this.camera.position.altitude);
+                forwardRay.pointAt(horizon, originPoint);
+
+                globe.computePositionFromPoint(originPoint[0], originPoint[1], originPoint[2], originPos);
+            }
+
+            origin.setToIdentity();
+            origin.multiplyByLocalCoordinateTransform(originPoint, globe);
+            modelview.multiplyMatrix(origin);
+
+            result.position.copy(originPos);
+            result.range = -modelview[11];
+            result.heading = modelview.extractHeading(this.camera.roll); // disambiguate heading and roll
+            result.tilt = modelview.extractTilt();
+            result.roll = this.camera.roll; // roll passes straight through
+
+            return result;
+        };
+
+        /**
          * Requests the WorldWind objects displayed at a specified screen-coordinate point.
          *
          * If the point intersects the terrain, the returned list contains an object identifying the associated geographic
@@ -95912,7 +95782,7 @@ define('WorldWindow',[
                     Logger.logMessage(Logger.LEVEL_SEVERE, "WorldWindow", "computeViewingTransform", "missingModelview"));
             }
 
-            this.camera.computeViewingTransform(modelview);
+            this.cameraToViewingTransform(modelview);
 
             if (projection) {
                 var eyePos = this.camera.position,
@@ -95953,6 +95823,45 @@ define('WorldWindow',[
                 projection.setToIdentity();
                 projection.setToPerspectiveProjection(viewport.width, viewport.height, fieldOfView, nearDistance, farDistance);
             }
+        };
+
+        /**
+         * Internal use only.
+         * Computes the model view matrix for this camera.
+         * @ignore
+         */
+        WorldWindow.prototype.cameraToViewingTransform = function (modelview) {
+            if (!modelview) {
+                throw new ArgumentError(
+                    Logger.logMessage(Logger.LEVEL_SEVERE, "Camera", "cameraToViewingTransform", "missingModelview"));
+            }
+
+            modelview.setToIdentity();
+            modelview.multiplyByFirstPersonModelview(this.camera.position, this.camera.heading, this.camera.tilt, this.camera.roll, this.globe);
+
+            return modelview;
+        };
+
+        /**
+         * Internal use only.
+         * Computes the model view matrix for this look at view.
+         * @ignore
+         */
+        WorldWindow.prototype.lookAtToViewingTransform = function (lookAt, modelview) {
+            if (!lookAt) {
+                throw new ArgumentError(
+                    Logger.logMessage(Logger.LEVEL_SEVERE, "WorldWindow", "lookAtToViewingTransform", "missingGlobe"));
+            }
+
+            if (!modelview) {
+                throw new ArgumentError(
+                    Logger.logMessage(Logger.LEVEL_SEVERE, "WorldWindow", "lookAtToViewingTransform", "missingModelview"));
+            }
+
+            modelview.setToIdentity();
+            modelview.multiplyByLookAtModelview(lookAt.position, lookAt.range, lookAt.heading, lookAt.tilt, lookAt.roll, this.globe);
+
+            return modelview;
         };
 
         /**
