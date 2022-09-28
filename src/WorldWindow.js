@@ -175,7 +175,7 @@ define([
              * @type {Rectangle}
              * @readonly
              */
-            this.viewport = new Rectangle(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+            this.viewport = new Rectangle(0, 0, 0, 0);
 
             /**
              * The globe displayed.
@@ -811,12 +811,24 @@ define([
                 width = gl.canvas.clientWidth * this.pixelScale,
                 height = gl.canvas.clientHeight * this.pixelScale;
 
-            if (gl.canvas.width != width ||
-                gl.canvas.height != height) {
+            if (gl.canvas.width != width || gl.canvas.height != height
+                || this.viewport.width === 0 || this.viewport.height === 0) {
 
                 // Make the canvas drawing buffer size match its screen size.
                 gl.canvas.width = width;
                 gl.canvas.height = height;
+
+                // Keep map scale by adopting field of view on view port resize
+                if (this.viewport.height !== 0) {
+                    try {
+                        this.camera.fieldOfView *= height / this.viewport.height;
+                    } catch (ignore) {
+                        // Keep original field of view in case new one does not fit requirements
+                    }
+                } else {
+                    // Initialize vertical field of view assuming that horizontal is 45 degrees
+                    this.camera.fieldOfView = 45 * height / width;
+                }
 
                 // Set the WebGL viewport to match the canvas drawing buffer size.
                 gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);

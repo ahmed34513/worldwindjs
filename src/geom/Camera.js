@@ -33,33 +33,99 @@ define([
              */
             this.position = new Position(30, -110, 10e6);
 
+            // Intentionally not documented
+            this._heading = 0;
+
+            // Intentionally not documented
+            this._tilt = 0;
+
+            // Intentionally not documented
+            this._roll = 0;
+
+            // Intentionally not documented
+            this._fieldOfView = 45;
+        };
+
+        Object.defineProperties(Camera.prototype, {
             /**
              * Camera heading, in degrees clockwise from north.
              * @type {Number}
              * @default 0
+             * @throws {ArgumentError} If the specified heading is out of range.
              */
-            this.heading = 0;
+            heading: {
+                get: function () {
+                    return this._heading;
+                },
+                set: function (value) {
+                    if (value < -180 || value > 180) {
+                        throw new ArgumentError(
+                            Logger.logMessage(Logger.LEVEL_SEVERE, "Camera", "setHeading", "Invalid heading")
+                        );
+                    }
+                    this._heading = value;
+                }
+            },
 
             /**
              * Camera tilt, in degrees.
              * @default 0
+             * @throws {ArgumentError} If the specified tilt is out of range.
              */
-            this.tilt = 0;
+            tilt: {
+                get: function () {
+                    return this._tilt;
+                },
+                set: function (value) {
+                    if (value < 0 || value > 90) {
+                        throw new ArgumentError(
+                            Logger.logMessage(Logger.LEVEL_SEVERE, "Camera", "setTilt", "Invalid tilt")
+                        );
+                    }
+                    this._tilt = value;
+                }
+            },
 
             /**
              * Camera roll, in degrees.
              * @type {Number}
              * @default 0
+             * @throws {ArgumentError} If the specified roll is out of range.
              */
-            this.roll = 0;
+            roll: {
+                get: function () {
+                    return this._roll;
+                },
+                set: function (value) {
+                    if (value < -180 || value > 180) {
+                        throw new ArgumentError(
+                            Logger.logMessage(Logger.LEVEL_SEVERE, "Camera", "setRoll", "Invalid roll")
+                        );
+                    }
+                    this._roll = value;
+                }
+            },
 
             /**
              * Camera vertical field of view, in degrees
              * @type {Number}
              * @default 45
+             * @throws {ArgumentError} If the specified field of view is out of range.
              */
-            this.fieldOfView = 45;
-        };
+            fieldOfView: {
+                get: function () {
+                    return this._fieldOfView;
+                },
+                set: function (value) {
+                    if (value < 0 || value > 180) {
+                        throw new ArgumentError(
+                            Logger.logMessage(Logger.LEVEL_SEVERE, "Camera", "setFieldOfView", "Invalid field of view")
+                        );
+                    }
+                    this._fieldOfView = value;
+                }
+            }
+        });
 
         /**
          * Indicates whether the components of this object are equal to those of a specified object.
