@@ -208,6 +208,8 @@ define([
              * @default [Camera]{@link Camera}
              */
             this.camera = new Camera();
+            // Initialize vertical field of view assuming that default angle value is horizontal
+            this.camera.fieldOfView *= this.viewport.height / this.viewport.width;
 
             /**
              * The controller used to manipulate the globe.
@@ -817,6 +819,15 @@ define([
                 // Make the canvas drawing buffer size match its screen size.
                 gl.canvas.width = width;
                 gl.canvas.height = height;
+
+                // Keep map scale by adopting field of view on view port resize
+                if (this.viewport.height !== 0) {
+                    try {
+                        this.camera.fieldOfView *= height / this.viewport.height;
+                    } catch (ignore) {
+                        // Keep original field of view in case new one does not fit requirements
+                    }
+                }
 
                 // Set the WebGL viewport to match the canvas drawing buffer size.
                 gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
